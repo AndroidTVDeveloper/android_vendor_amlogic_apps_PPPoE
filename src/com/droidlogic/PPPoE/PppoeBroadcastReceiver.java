@@ -13,10 +13,14 @@ import android.net.wifi.WifiManager;
 import android.util.Log;
 import android.content.SharedPreferences;
 import com.amlogic.pppoe.PppoeOperation;
+import com.droidlogic.pppoe.PppoeStateTracker;
+import com.droidlogic.pppoe.PppoeService;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.SystemProperties;
+
 
 public class PppoeBroadcastReceiver extends BroadcastReceiver {
     private static final String TAG = "PppoeBroadcastReceiver";
@@ -33,6 +37,35 @@ public class PppoeBroadcastReceiver extends BroadcastReceiver {
     private PppoeOperation operation = null;
     private static boolean mFirstAutoDialDone = false;
     private Timer mMandatoryDialTimer = null;
+    public static final int TYPE_PPPOE = 0;
+    private static final String PPPOE_SERVICE = "pppoe";
+    void StartPppoeService(Context context)
+    {
+        boolean needPppoe = true;
+        if (needPppoe) {
+            final PppoeStateTracker pppoetracker;
+            HandlerThread handlerThread = new HandlerThread("myHandlerThread");
+            handlerThread.start();
+            try {
+                pppoetracker = new PppoeStateTracker(handlerThread.getLooper(),TYPE_PPPOE, PPPOE_SERVICE);
+                PppoeService pppoe = new PppoeService(context,pppoetracker);
+                Log.e(TAG, "start add service pppoe");
+                try {
+                    Class.forName("android.os.ServiceManager").getMethod("addService", new Class[] {String.class, IBinder.class })
+                    .invoke(null, new Object[] { PPPOE_SERVICE, pppoe });
+                }catch (Exception ex) {
+                    Log.e(TAG, "addService " + PPPOE_SERVICE + " fail:" + ex);
+                }
+                Log.d(TAG, "end add service pppoe");
+                pppoetracker.startMonitoring(context);
+                //  if (config.isDefault()) {
+                    pppoetracker.reconnect();
+                //  }
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, "Problem creating TYPE_PPPOE tracker: " + e);
+            }
+        }
+    }
 
     private String getNetworkInterfaceSelected(Context context)
     {
@@ -85,6 +118,7 @@ public class PppoeBroadcastReceiver extends BroadcastReceiver {
         mUserName = getUserName(context);
         mPassword = getPassword(context);
         if (ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
+            StartPppoeService(context);
             context.startService(new Intent(context,
                  MyPppoeService.class));
             mFirstAutoDialDone = true;
