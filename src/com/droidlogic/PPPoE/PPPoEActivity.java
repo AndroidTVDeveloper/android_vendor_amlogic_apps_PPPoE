@@ -22,8 +22,6 @@ import android.os.ServiceManager;
 public class PPPoEActivity extends Activity {
     private final String TAG = "PPPoEActivity";
     private PppoeConfigDialog mPppoeConfigDialog;
-    private PppoeDevInfo mPppoeInfo;
-    private PppoeManager mPppoeManager;
     private SystemControlManager mSystemControlManager = null;
     public static final int MSG_START_DIAL = 0xabcd0000;
     public static final int MSG_MANDATORY_DIAL = 0xabcd0010;
@@ -50,16 +48,6 @@ public class PPPoEActivity extends Activity {
             if (info != null) {
                Log.d(TAG, info.toString());
             }
-            IBinder b = ServiceManager.getService("pppoe");
-            IPppoeManager PppoeService = IPppoeManager.Stub.asInterface(b);
-            mPppoeManager = new PppoeManager(PppoeService, this);
-            mPppoeInfo = mPppoeManager.getSavedPppoeConfig();
-            if (mPppoeInfo != null) {
-                Log.d(TAG, "IP: " + mPppoeInfo.getIpAddress());
-                Log.d(TAG, "MASK: " + mPppoeInfo.getNetMask());
-                Log.d(TAG, "GW: " + mPppoeInfo.getRouteAddr());
-                Log.d(TAG, "DNS: " + mPppoeInfo.getDnsAddr());
-            }
             if (mPppoeConfigDialog != null) {
                 Log.d(TAG, "Show PppoeConfigDialog");
                 mPppoeConfigDialog.show();
@@ -73,6 +61,11 @@ public class PPPoEActivity extends Activity {
         super.onDestroy();
         if (mPppoeConfigDialog != null)
             mPppoeConfigDialog.dismiss();
-        mPppoeConfigDialog=null;
     }
+    @Override
+    public void finish() {
+        super.finish();
+        mPppoeConfigDialog = null;
+    }
+
 }

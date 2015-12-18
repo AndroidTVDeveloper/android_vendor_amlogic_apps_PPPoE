@@ -46,6 +46,7 @@ public class PppoeBroadcastReceiver extends BroadcastReceiver {
             final PppoeStateTracker pppoetracker;
             HandlerThread handlerThread = new HandlerThread("myHandlerThread");
             handlerThread.start();
+            Handler handler = new Handler(handlerThread.getLooper());
             try {
                 pppoetracker = new PppoeStateTracker(handlerThread.getLooper(),TYPE_PPPOE, PPPOE_SERVICE);
                 PppoeService pppoe = new PppoeService(context,pppoetracker);
@@ -57,7 +58,7 @@ public class PppoeBroadcastReceiver extends BroadcastReceiver {
                     Log.e(TAG, "addService " + PPPOE_SERVICE + " fail:" + ex);
                 }
                 Log.d(TAG, "end add service pppoe");
-                pppoetracker.startMonitoring(context);
+                pppoetracker.startMonitoring(context,handler);
                 //  if (config.isDefault()) {
                     pppoetracker.reconnect();
                 //  }
