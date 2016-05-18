@@ -154,20 +154,20 @@ public class PppoeBroadcastReceiver extends BroadcastReceiver {
     }
 
 
-    void set_pppoe_running_flag()
+    void setPppoeRunningFlag()
     {
-        SystemProperties.set(PppoeConfigDialog.ethernet_dhcp_repeat_flag, "disabled");
+        SystemProperties.set(PppoeConfigDialog.ETHERNETDHCP, "disabled");
 
-        SystemProperties.set(PppoeConfigDialog.pppoe_running_flag, "100");
-        String propVal = SystemProperties.get(PppoeConfigDialog.pppoe_running_flag);
+        SystemProperties.set(PppoeConfigDialog.PPPOERUNNING, "100");
+        String propVal = SystemProperties.get(PppoeConfigDialog.PPPOERUNNING);
         int n = 0;
         if (propVal.length() != 0) {
             try {
                 n = Integer.parseInt(propVal);
-                Log.d(TAG, "set_pppoe_running_flag as " + n);
+                Log.d(TAG, "setPppoeRunningFlag as " + n);
             } catch (NumberFormatException e) {}
         } else {
-            Log.d(TAG, "failed to set_pppoe_running_flag");
+            Log.d(TAG, "failed to setPppoeRunningFlag");
         }
 
         return;
@@ -182,7 +182,7 @@ public class PppoeBroadcastReceiver extends BroadcastReceiver {
             switch (msg.what) {
                 case PPPoEActivity.MSG_MANDATORY_DIAL:
                     Log.d(TAG, "handleMessage: MSG_MANDATORY_DIAL");
-                    set_pppoe_running_flag();
+                    setPppoeRunningFlag();
                     operation.terminate();
                     operation.disconnect();
                     mHandler.sendEmptyMessageDelayed(PPPoEActivity.MSG_START_DIAL, DELAY_TIME);
@@ -190,7 +190,7 @@ public class PppoeBroadcastReceiver extends BroadcastReceiver {
 
                 case PPPoEActivity.MSG_START_DIAL:
                     Log.d(TAG, "handleMessage: MSG_START_DIAL");
-                    set_pppoe_running_flag();
+                    setPppoeRunningFlag();
                     operation.connect(mInterfaceSelected, mUserName, mPassword);
                 break;
 

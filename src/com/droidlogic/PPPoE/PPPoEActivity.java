@@ -54,18 +54,10 @@ public class PPPoEActivity extends Activity {
             }
         }
     }
-
-
     @Override
     public void onDestroy() {
-        super.onDestroy();
         if (mPppoeConfigDialog != null)
             mPppoeConfigDialog.dismiss();
+        super.onDestroy();
     }
-    @Override
-    public void finish() {
-        super.finish();
-        mPppoeConfigDialog = null;
-    }
-
 }
