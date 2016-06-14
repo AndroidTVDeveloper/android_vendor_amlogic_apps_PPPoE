@@ -37,7 +37,7 @@ public class PppoeBroadcastReceiver extends BroadcastReceiver {
     private PppoeOperation operation = null;
     private static boolean mFirstAutoDialDone = false;
     private Timer mMandatoryDialTimer = null;
-    public static final int TYPE_PPPOE = 0;
+    public static final int TYPE_PPPOE = 8;
     private static final String PPPOE_SERVICE = "pppoe";
     void StartPppoeService(Context context)
     {
