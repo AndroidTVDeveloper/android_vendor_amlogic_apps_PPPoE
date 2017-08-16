@@ -64,9 +64,8 @@
     <application android:icon="@drawable/icon"
         android:persistent="true"
         android:label="@string/app_name">
-	    <uses-library
-	        android:name="AmlogicPPPoE">
-	    </uses-library>
+        <uses-library android:name="droidlogic.external.pppoe" />
+        <uses-library android:name="droidlogic.frameworks.pppoe" />
 
         <activity android:name=".PPPoEActivity"
                   android:label="@string/app_name">
