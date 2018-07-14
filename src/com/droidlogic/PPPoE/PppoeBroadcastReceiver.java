@@ -37,7 +37,10 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.SystemProperties;
-
+import android.content.ServiceConnection;
+import com.droidlogic.pppoe.IPppoeManager;
+import android.content.ComponentName;
+import com.droidlogic.app.SystemControlManager;
 
 public class PppoeBroadcastReceiver extends BroadcastReceiver {
     private static final String TAG = "PppoeBroadcastReceiver";
@@ -55,35 +58,53 @@ public class PppoeBroadcastReceiver extends BroadcastReceiver {
     private static boolean mFirstAutoDialDone = false;
     private Timer mMandatoryDialTimer = null;
     public static final int TYPE_PPPOE = 8;
-    private static final String PPPOE_SERVICE = "pppoe";
+    //private static final String PPPOE_SERVICE = "pppoe";
+    private static final String PPPOE_SERVICE = "com.droidlogic.PppoeService";
+    private int RETRY_MAX = 10;
+    private Context mContext;
+    private Intent intent = null;
+    IPppoeManager mService = null;
+    private SystemControlManager mSystemControlManager;
+
     void StartPppoeService(Context context)
     {
         boolean needPppoe = true;
-        if (needPppoe) {
-            final PppoeStateTracker pppoetracker;
-            HandlerThread handlerThread = new HandlerThread("myHandlerThread");
-            handlerThread.start();
-            Handler handler = new Handler(handlerThread.getLooper());
+        int retry = RETRY_MAX;
+        boolean mIsBind = false;
+        mContext = context;
+        if (needPppoe)
+       {
             try {
-                pppoetracker = new PppoeStateTracker(handlerThread.getLooper(),TYPE_PPPOE, PPPOE_SERVICE);
-                PppoeService pppoe = new PppoeService(context,pppoetracker);
-                Log.e(TAG, "start add service pppoe");
-                try {
-                    Class.forName("android.os.ServiceManager").getMethod("addService", new Class[] {String.class, IBinder.class })
-                    .invoke(null, new Object[] { PPPOE_SERVICE, pppoe });
-                }catch (Exception ex) {
-                    Log.e(TAG, "addService " + PPPOE_SERVICE + " fail:" + ex);
+                synchronized (this) {
+                    while (true) {
+                        intent = new Intent();
+                        intent.setAction(PPPOE_SERVICE);
+                        intent.setPackage(PPPOE_SERVICE);
+                        mIsBind = mContext.bindService(intent, serConn, mContext.BIND_AUTO_CREATE);
+                        Log.d(TAG,"StartPppoeService mIsBind:" + mIsBind + ", retry:" + retry);
+                        if (mIsBind || retry <= 0) {
+                            break;
+                        }
+                        retry --;
+                        Thread.sleep(500);
+                    }
                 }
-                Log.d(TAG, "end add service pppoe");
-                pppoetracker.startMonitoring(context,handler);
-                //  if (config.isDefault()) {
-                    pppoetracker.reconnect();
-                //  }
-            } catch (IllegalArgumentException e) {
-                Log.e(TAG, "Problem creating TYPE_PPPOE tracker: " + e);
-            }
-        }
+            }catch(InterruptedException e){}
+       }
     }
+
+    private ServiceConnection serConn = new ServiceConnection() {
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Log.d(TAG,"[onServiceDisconnected]mService:"+mService);
+            mService = null;
+        }
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mService = IPppoeManager.Stub.asInterface(service);
+            Log.d(TAG,"onServiceConnected()..mService:"+mService);
+        }
+    };
 
     private String getNetworkInterfaceSelected(Context context)
     {
@@ -135,6 +156,8 @@ public class PppoeBroadcastReceiver extends BroadcastReceiver {
 
         mUserName = getUserName(context);
         mPassword = getPassword(context);
+        mSystemControlManager = new SystemControlManager(mContext);
+
         if (ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
             StartPppoeService(context);
             context.startService(new Intent(context,
@@ -173,10 +196,10 @@ public class PppoeBroadcastReceiver extends BroadcastReceiver {
 
     void setPppoeRunningFlag()
     {
-        SystemProperties.set(PppoeConfigDialog.ETHERNETDHCP, "disabled");
+        mSystemControlManager.setProperty(PppoeConfigDialog.ETHERNETDHCP, "disabled");
 
-        SystemProperties.set(PppoeConfigDialog.PPPOERUNNING, "100");
-        String propVal = SystemProperties.get(PppoeConfigDialog.PPPOERUNNING);
+        mSystemControlManager.setProperty(PppoeConfigDialog.PPPOERUNNING, "100");
+        String propVal = mSystemControlManager.getProperty(PppoeConfigDialog.PPPOERUNNING);
         int n = 0;
         if (propVal.length() != 0) {
             try {

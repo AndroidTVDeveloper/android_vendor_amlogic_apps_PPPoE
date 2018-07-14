@@ -60,6 +60,7 @@
     <uses-permission android:name="com.android.launcher.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.MOVE_PACKAGE" />
     <uses-permission android:name="android.permission.MANAGE_USB" />
+    <uses-permission android:name="droidlogic.permission.SYSTEM_CONTROL" />
 
     <application android:icon="@drawable/icon"
         android:persistent="true"

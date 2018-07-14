@@ -59,6 +59,7 @@ import com.droidlogic.pppoe.PppoeStateTracker;
 import com.droidlogic.app.SystemControlManager;
 import com.amlogic.pppoe.PppoeOperation;
 
+
 public class PppoeConfigDialog extends AlertDialog implements DialogInterface.OnClickListener, TextWatcher
 {
     private static final String PPPOE_DIAL_RESULT_ACTION =
@@ -98,6 +99,7 @@ public class PppoeConfigDialog extends AlertDialog implements DialogInterface.On
     private PppoeReceiver pppoeReceiver = null;
     private CheckBox mCbAutoDial;
     private SystemControlManager sw = null;
+    private SystemControlManager mSystemControlManager = null;
 
     Timer mConnectTimer = null;
     Timer mDisconnectTimer = null;
@@ -121,7 +123,7 @@ public class PppoeConfigDialog extends AlertDialog implements DialogInterface.On
     private ConnectThread mHandlerThread;
     private boolean isPppoeRunning()
     {
-        String propVal = SystemProperties.get(PPPOERUNNING);
+        String propVal = mSystemControlManager.getProperty(PPPOERUNNING);
         int n = 0;
         if (propVal.length() != 0) {
             try {
@@ -135,9 +137,9 @@ public class PppoeConfigDialog extends AlertDialog implements DialogInterface.On
 
     private void setPppoeRunningFlag()
     {
-        SystemProperties.set(ETHERNETDHCP, "disabled");
-        SystemProperties.set(PPPOERUNNING, "100");
-        String propVal = SystemProperties.get(PPPOERUNNING);
+        mSystemControlManager.setProperty(ETHERNETDHCP, "disabled");
+        mSystemControlManager.setProperty(PPPOERUNNING, "100");
+        String propVal = mSystemControlManager.getProperty(PPPOERUNNING);
         int n = 0;
         if (propVal.length() != 0) {
             try {
@@ -152,9 +154,9 @@ public class PppoeConfigDialog extends AlertDialog implements DialogInterface.On
 
     private void clearPppoeRunningFlag()
     {
-        SystemProperties.set(ETHERNETDHCP, "enabled");
-        SystemProperties.set(PPPOERUNNING, "0");
-        String propVal = SystemProperties.get(PPPOERUNNING);
+        mSystemControlManager.setProperty(ETHERNETDHCP, "enabled");
+        mSystemControlManager.setProperty(PPPOERUNNING, "0");
+        String propVal = mSystemControlManager.getProperty(PPPOERUNNING);
         int n = 0;
         if (propVal.length() != 0) {
             try {
@@ -176,6 +178,7 @@ public class PppoeConfigDialog extends AlertDialog implements DialogInterface.On
         mHandlerThread.start();
         mHandler = new PppoeDialogHandler();
         sw = new SystemControlManager(context);
+        mSystemControlManager = new SystemControlManager(context);
         mTextViewChangedHandler = new Handler();
         operation = new PppoeOperation();
         buildDialog(context);
@@ -394,7 +397,7 @@ public class PppoeConfigDialog extends AlertDialog implements DialogInterface.On
                     showAlertDialog(context.getResources().getString(R.string.pppoe_disconnect_failed));
                     pppoe_state = PPPOE_STATE_DISCONNECTED;
                     clearPppoeRunningFlag();
-                    SystemProperties.set("net.pppoe.isConnected", "false");
+                    mSystemControlManager.setProperty("net.pppoe.isConnected", "false");
                     break;
                 case PPPoEActivity.MSG_CONNECT_TIMEOUT:
                     Log.d(TAG, "handleMessage: MSG_CONNECT_TIMEOUT");
@@ -402,7 +405,7 @@ public class PppoeConfigDialog extends AlertDialog implements DialogInterface.On
                     if (waitDialog != null)
                         waitDialog.cancel();
                     showAlertDialog(context.getResources().getString(R.string.pppoe_connect_failed));
-                    SystemProperties.set("net.pppoe.isConnected", "false");
+                    mSystemControlManager.setProperty("net.pppoe.isConnected", "false");
                     break;
                 case SHOWWAITDIALOG:
                     int id = msg.getData().getInt("id");
@@ -657,7 +660,7 @@ public class PppoeConfigDialog extends AlertDialog implements DialogInterface.On
                     }
                     pppoe_state = PPPOE_STATE_CONNECTED;
                     showAlertDialog(context.getResources().getString(R.string.pppoe_connect_ok));
-                    SystemProperties.set("net.pppoe.isConnected", "true");
+                    mSystemControlManager.setProperty("net.pppoe.isConnected", "true");
                 }
                 if (event == PppoeStateTracker.EVENT_DISCONNECTED) {
                     if (pppoe_state == PPPOE_STATE_DISCONNECTING) {
@@ -667,7 +670,7 @@ public class PppoeConfigDialog extends AlertDialog implements DialogInterface.On
                     clearPppoeRunningFlag();
                     pppoe_state = PPPOE_STATE_DISCONNECTED;
                     showAlertDialog(context.getResources().getString(R.string.pppoe_disconnect_ok));
-                    SystemProperties.set("net.pppoe.isConnected", "false");
+                    mSystemControlManager.setProperty("net.pppoe.isConnected", "false");
                 }
                 if (event == PppoeStateTracker.EVENT_CONNECT_FAILED) {
                     String ppp_err = intent.getStringExtra(PppoeManager.EXTRA_PPPOE_ERRCODE);
@@ -684,7 +687,7 @@ public class PppoeConfigDialog extends AlertDialog implements DialogInterface.On
                     else if (ppp_err.equals("650"))
                         reason = context.getResources().getString(R.string.pppoe_connect_failed_server_no_response);
                     showAlertDialog(context.getResources().getString(R.string.pppoe_connect_failed) + "\n" + reason);
-                    SystemProperties.set("net.pppoe.isConnected", "false");
+                    mSystemControlManager.setProperty("net.pppoe.isConnected", "false");
                 }
             }
             else if (action.equals(ETH_STATE_CHANGED_ACTION)) {
