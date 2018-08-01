@@ -58,8 +58,7 @@ public class PppoeBroadcastReceiver extends BroadcastReceiver {
     private static boolean mFirstAutoDialDone = false;
     private Timer mMandatoryDialTimer = null;
     public static final int TYPE_PPPOE = 8;
-    //private static final String PPPOE_SERVICE = "pppoe";
-    private static final String PPPOE_SERVICE = "com.droidlogic.PppoeService";
+    private static final String PPPOE_SERVICE = "pppoe";
     private int RETRY_MAX = 10;
     private Context mContext;
     private Intent intent = null;
@@ -69,42 +68,31 @@ public class PppoeBroadcastReceiver extends BroadcastReceiver {
     void StartPppoeService(Context context)
     {
         boolean needPppoe = true;
-        int retry = RETRY_MAX;
-        boolean mIsBind = false;
-        mContext = context;
-        if (needPppoe)
-       {
+        if (needPppoe) {
+            final PppoeStateTracker pppoetracker;
+            HandlerThread handlerThread = new HandlerThread("myHandlerThread");
+            handlerThread.start();
+            Handler handler = new Handler(handlerThread.getLooper());
             try {
-                synchronized (this) {
-                    while (true) {
-                        intent = new Intent();
-                        intent.setAction(PPPOE_SERVICE);
-                        intent.setPackage(PPPOE_SERVICE);
-                        mIsBind = mContext.bindService(intent, serConn, mContext.BIND_AUTO_CREATE);
-                        Log.d(TAG,"StartPppoeService mIsBind:" + mIsBind + ", retry:" + retry);
-                        if (mIsBind || retry <= 0) {
-                            break;
-                        }
-                        retry --;
-                        Thread.sleep(500);
-                    }
+                pppoetracker = new PppoeStateTracker(handlerThread.getLooper(),TYPE_PPPOE, PPPOE_SERVICE);
+                PppoeService pppoe = new PppoeService(context,pppoetracker);
+                Log.e(TAG, "start add service pppoe");
+                try {
+                    Class.forName("android.os.ServiceManager").getMethod("addService", new Class[] {String.class, IBinder.class })
+                    .invoke(null, new Object[] { PPPOE_SERVICE, pppoe });
+                }catch (Exception ex) {
+                    Log.e(TAG, "addService " + PPPOE_SERVICE + " fail:" + ex);
                 }
-            }catch(InterruptedException e){}
-       }
+                Log.d(TAG, "end add service pppoe");
+                pppoetracker.startMonitoring(context,handler);
+                //  if (config.isDefault()) {
+                    pppoetracker.reconnect();
+                //  }
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, "Problem creating TYPE_PPPOE tracker: " + e);
+            }
+        }
     }
-
-    private ServiceConnection serConn = new ServiceConnection() {
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            Log.d(TAG,"[onServiceDisconnected]mService:"+mService);
-            mService = null;
-        }
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            mService = IPppoeManager.Stub.asInterface(service);
-            Log.d(TAG,"onServiceConnected()..mService:"+mService);
-        }
-    };
 
     private String getNetworkInterfaceSelected(Context context)
     {
