@@ -61,6 +61,7 @@
     <uses-permission android:name="android.permission.MOVE_PACKAGE" />
     <uses-permission android:name="android.permission.MANAGE_USB" />
     <uses-permission android:name="droidlogic.permission.SYSTEM_CONTROL" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application android:icon="@drawable/icon"
         android:persistent="true"
