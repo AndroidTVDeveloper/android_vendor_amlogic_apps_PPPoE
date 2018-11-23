@@ -51,7 +51,7 @@ public class PPPoEActivity extends Activity {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "Create PppoeConfigDialog");
 
-        mSystemControlManager = new SystemControlManager();
+        mSystemControlManager = SystemControlManager.getInstance();
         String eth_link = mSystemControlManager.readSysFs("/sys/class/ethernet/linkspeed");
         if (eth_link.contains("unlink")) {
             Toast toast = Toast.makeText(this,this.getResources().getString(R.string.please_insert_the_cable),Toast.LENGTH_LONG);

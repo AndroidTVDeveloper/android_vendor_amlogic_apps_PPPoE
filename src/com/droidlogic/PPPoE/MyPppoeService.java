@@ -67,7 +67,7 @@ public class MyPppoeService extends Service
         mContext=this;
         mNM = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-        mSystemControlManager = new SystemControlManager(mContext);
+        mSystemControlManager = SystemControlManager.getInstance();
         operation = new PppoeOperation();
         mPppoeHandler = new PppoeHandler();
         mInterfaceObserver = new InterfaceObserver();

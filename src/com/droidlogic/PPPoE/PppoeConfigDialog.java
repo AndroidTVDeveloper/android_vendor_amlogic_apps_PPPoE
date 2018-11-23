@@ -98,7 +98,6 @@ public class PppoeConfigDialog extends AlertDialog implements DialogInterface.On
     private AlertDialog alertDia = null;
     private PppoeReceiver pppoeReceiver = null;
     private CheckBox mCbAutoDial;
-    private SystemControlManager sw = null;
     private SystemControlManager mSystemControlManager = null;
 
     Timer mConnectTimer = null;
@@ -177,8 +176,7 @@ public class PppoeConfigDialog extends AlertDialog implements DialogInterface.On
         mHandlerThread = new ConnectThread();
         mHandlerThread.start();
         mHandler = new PppoeDialogHandler();
-        sw = new SystemControlManager(context);
-        mSystemControlManager = new SystemControlManager(context);
+        mSystemControlManager = SystemControlManager.getInstance();
         mTextViewChangedHandler = new Handler();
         operation = new PppoeOperation();
         buildDialog(context);
@@ -203,7 +201,7 @@ public class PppoeConfigDialog extends AlertDialog implements DialogInterface.On
     }
 
     private boolean isEthDeviceAdded() {
-        String str = sw.readSysFs(ETHERNETLINK);
+        String str = mSystemControlManager.readSysFs(ETHERNETLINK);
         if (str == null)
             return false ;
         if (str.contains("unlink")) {

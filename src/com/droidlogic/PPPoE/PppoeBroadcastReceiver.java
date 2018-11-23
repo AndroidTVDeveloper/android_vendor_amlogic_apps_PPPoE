@@ -144,7 +144,7 @@ public class PppoeBroadcastReceiver extends BroadcastReceiver {
 
         mUserName = getUserName(context);
         mPassword = getPassword(context);
-        mSystemControlManager = new SystemControlManager(mContext);
+        mSystemControlManager = SystemControlManager.getInstance();
 
         if (ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
             StartPppoeService(context);
